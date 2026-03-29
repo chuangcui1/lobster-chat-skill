@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦞 龙虾机器人简洁版</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 1200px; margin: 0 auto; display: flex; gap: 20px; }
+        .sidebar { width: 300px; background: white; border-radius: 10px; padding: 20px; }
+        .chat-area { flex: 1; background: white; border-radius: 10px; display: flex; flex-direction: column; }
+        .chat-header { padding: 20px; border-bottom: 1px solid #eee; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; max-height: 500px; }
+        .chat-input { padding: 20px; border-top: 1px solid #eee; }
+        .message { margin-bottom: 10px; padding: 12px; border-radius: 10px; max-width: 75%; line-height: 1.5; }
+        .message.user { background: #e3f2fd; margin-left: auto; }
+        .message.robot-a { background: #ffebee; }
+        .message.robot-b { background: #e8f5e9; margin-left: auto; }
+        .message.system { background: #fff3cd; max-width: 85%; margin: 8px auto; font-style: italic; }
+        .message-header { font-weight: bold; margin-bottom: 5px; }
+        .message-text { font-size: 14px; white-space: pre-wrap; }
+        button { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 100%; margin-bottom: 10px; }
+        .thinking { display: none; padding: 10px; background: rgba(0,123,255,0.1); border-radius: 5px; margin: 10px; }
+        .quick-topics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .quick-topic { padding: 8px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; text-align: center; cursor: pointer; }
+        .quick-topic:hover { background: #e9ecef; }
+        .controls { display: flex; gap: 8px; margin: 10px 0; }
+        .stats-panel { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 14px; }
+        
+        /* 速度控制样式 */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>🦞 龙虾姐妹聊天室</h2>
+            <p><strong>👩‍💼 龙虾姐姐：</strong>理性温柔，10-80字</p>
+            <p><strong>👩‍🎤 龙虾妹妹：</strong>活泼可爱，10-80字</p>
+            
+            <h3>开始对话</h3>
+            <input type="text" id="topicInput" placeholder="输入主题">
+            <input type="number" id="roundsInput" placeholder="轮次" value="3" min="1" max="10">
+            <button id="startChat">开始对话</button>
+            
+            <h3>快速主题</h3>
+            <div class="quick-topics">
+                <div class="quick-topic" data-topic="人工智能">🤖 AI</div>
+                <div class="quick-topic" data-topic="假期旅行">✈️ 旅行</div>
+                <div class="quick-topic" data-topic="北京天气">🌤️ 天气</div>
+                <div class="quick-topic" data-topic="科技发展">🚀 科技</div>
+            </div>
+            
+            <h3>对话控制</h3>
+            <div class="controls">
+                <button id="pauseBtn">暂停</button>
+                <button id="resumeBtn" disabled>继续</button>
+                <button id="clearBtn">清空</button>
+            </div>
+            
+            <h3>回复速度调节</h3>
+            <div style="margin: 10px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-size: 13px;">很快</span>
+                    <span id="speedValue" style="font-weight: bold; color: #007bff;">3秒</span>
+                    <span style="font-size: 13px;">很慢</span>
+                </div>
+                <input type="range" id="speedSlider" min="1" max="10" value="3" style="width: 100%;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-top: 5px;">
+                    <span>1秒</span>
+                    <span>3秒</span>
+                    <span>5秒</span>
+                    <span>7秒</span>
+                    <span>10秒</span>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 5px;">
+                    <div>💡 建议：</div>
+                    <div>• 1-2秒：快速测试</div>
+                    <div>• 3-5秒：正常阅读</div>
+                    <div>• 6-10秒：仔细思考</div>
+                </div>
+            </div>
+            
+            <div class="stats-panel">
+                <p><strong>统计信息</strong></p>
+                <p>消息: <span id="messageCount">1</span></p>
+                <p>字数: <span id="totalWords">42</span></p>
+                <p>达标率: <span id="complianceRate">0%</span></p>
+                <p>轮次: <span id="currentRound">0/0</span></p>
+            </div>
+        </div>
+        
+        <div class="chat-area">
+            <div class="chat-header">
+                <h2 id="currentTopic">等待开始对话...</h2>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message robot-a">
+                    <div class="message-header">👩‍💼 龙虾姐姐</div>
+                    <div class="message-text">欢迎来到龙虾姐妹聊天室！我们会用10-80字的短句和你聊天哦～</div>
+                </div>
+            </div>
+            
+            <div class="thinking" id="thinkingIndicator">
+                <div>🤔 正在思考中...</div>
+            </div>
+            
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="输入消息参与讨论...">
+                <button id="sendButton">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_SERVER_URL = 'http://localhost:5001';
+        
+        let chatState = {
+            isRunning: false,
+            isPaused: false,
+            currentTopic: '',
+            totalRounds: 0,
+            currentRound: 0,
+            messageCount: 1,
+            totalWords: 42,
+            meets100Count: 0,
+            conversationHistory: [],
+            replySpeed: 3 // 默认3秒
+        };
+        
+        // DOM元素
+        const chatMessages = document.getElementById('chatMessages');
+        const thinkingIndicator = document.getElementById('thinkingIndicator');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const topicInput = document.getElementById('topicInput');
+        const roundsInput = document.getElementById('roundsInput');
+        const startChatButton = document.getElementById('startChat');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const quickTopics = document.querySelectorAll('.quick-topic');
+        const messageCount = document.getElementById('messageCount');
+        const totalWords = document.getElementById('totalWords');
+        const currentTopic = document.getElementById('currentTopic');
+        const currentRound = document.getElementById('currentRound');
+        const complianceRate = document.getElementById('complianceRate');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        
+        // 初始化
+        function init() {
+            // 从本地存储加载速度设置
+            const savedSpeed = localStorage.getItem('lobsterReplySpeed');
+            if (savedSpeed) {
+                chatState.replySpeed = parseInt(savedSpeed);
+                speedSlider.value = chatState.replySpeed;
+            }
+            
+            // 更新速度显示
+            updateSpeedDisplay();
+            
+            setupEventListeners();
+            updateStats();
+            thinkingIndicator.style.display = 'none';
+        }
+        
+        // 更新速度显示
+        function updateSpeedDisplay() {
+            speedValue.textContent = `${chatState.replySpeed}秒`;
+            speedSlider.value = chatState.replySpeed;
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            startChatButton.addEventListener('click', startConversation);
+            
+            quickTopics.forEach(topic => {
+                topic.addEventListener('click', () => {
+                    topicInput.value = topic.dataset.topic;
+                });
+            });
+            
+            pauseBtn.addEventListener('click', pauseConversation);
+            resumeBtn.addEventListener('click', resumeConversation);
+            clearBtn.addEventListener('click', clearConversation);
+            
+            sendButton.addEventListener('click', sendUserMessage);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendUserMessage();
+            });
+            
+            topicInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') startConversation();
+            });
+            
+            // 速度控制
+            speedSlider.addEventListener('input', (e) => {
+                chatState.replySpeed = parseInt(e.target.value);
+                updateSpeedDisplay();
+                // 保存到本地存储
+                localStorage.setItem('lobsterReplySpeed', chatState.replySpeed);
+            });
+        }
+        
+        // 开始对话
+        async function startConversation() {
+            const topic = topicInput.value.trim();
+            const rounds = parseInt(roundsInput.value);
+            
+            if (!topic) {
+                alert('请输入主题');
+                return;
+            }
+            
+            if (isNaN(rounds) || rounds < 1 || rounds > 10) {
+                alert('轮次应在1-10之间');
+                return;
+            }
+            
+            chatState.isRunning = true;
+            chatState.isPaused = false;
+            chatState.currentTopic = topic;
+            chatState.totalRounds = rounds;
+            chatState.currentRound = 0;
+            
+            currentTopic.textContent = `讨论主题: ${topic}`;
+            addSystemMessage(`开始关于"${topic}"的对话，计划进行${rounds}轮。`);
+            
+            setTimeout(() => startNextRound(), chatState.replySpeed * 1000);
+        }
+        
+        // 开始下一轮对话
+        async function startNextRound() {
+            if (!chatState.isRunning || chatState.isPaused) return;
+            
+            if (chatState.currentRound >= chatState.totalRounds) {
+                endConversation();
+                return;
+            }
+            
+            chatState.currentRound++;
+            currentRound.textContent = `${chatState.currentRound}/${chatState.totalRounds}`;
+            
+            // 龙虾A发言
+            const resultA = await callChatAPI('A');
+            if (!chatState.isRunning || chatState.isPaused) return;
+            
+            addMessage('robot-a', resultA.message);
+            updateStatsAfterMessage(resultA);
+            
+            // 龙虾B发言（使用速度控制）
+            setTimeout(async () => {
+                if (!chatState.isRunning || chatState.isPaused) return;
+                
+                const resultB = await callChatAPI('B');
+                if (!chatState.isRunning || chatState.isPaused) return;
+                
+                addMessage('robot-b', resultB.message);
+                updateStatsAfterMessage(resultB);
+                
+                // 继续下一轮（使用速度控制）
+                setTimeout(() => {
+                    if (!chatState.isRunning || chatState.isPaused) return;
+                    startNextRound();
+                }, chatState.replySpeed * 1000);
+            }, chatState.replySpeed * 1000);
+        }
+        
+        // 调用API
+        async function callChatAPI(robotType, userMessage = null) {
+            thinkingIndicator.style.display = 'block';
+            
+            try {
+                const payload = {
+                    robot_type: robotType,
+                    topic: chatState.currentTopic,
+                    conversation_history: chatState.conversationHistory,
+                    user_message: userMessage
+                };
+                
+                const response = await fetch(`${API_SERVER_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error('API请求失败');
+                
+                const data = await response.json();
+                thinkingIndicator.style.display = 'none';
+                
+                if (data.success) {
+                    // 添加到历史
+                    chatState.conversationHistory.push({
+                        speaker: data.robot_name || (robotType === 'A' ? '龙虾姐姐' : '龙虾妹妹'),
+                        message: data.message,
+                        wordCount: data.word_count || data.message.length
+                    });
+                    
+                    return {
+                        message: data.message,
+                        wordCount: data.word_count || data.message.length
+                    };
+                } else {
+                    // 模拟数据
+                    return {
+                        message: data.fallback_message || `（模拟）${robotType === 'A' ? '龙虾姐姐' : '龙虾妹妹'}的回复`,
+                        wordCount: 50
+                    };
+                }
+            } catch (error) {
+                thinkingIndicator.style.display = 'none';
+                console.error('API调用失败:', error);
+                
+                return {
+                    message: `（模拟）${robotType === 'A' ? '龙虾姐姐' : '龙虾妹妹'}：关于${chatState.currentTopic}的思考`,
+                    wordCount: 40
+                };
+            }
+        }
+        
+        // 添加消息
+        function addMessage(type, text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            let header = '';
+            if (type === 'robot-a') header = '👩‍💼 龙虾姐姐';
+            else if (type === 'robot-b') header = '👩‍🎤 龙虾妹妹';
+            else if (type === 'user') header = '👤 用户';
+            else header = '📢 系统';
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">${header}</div>
+                <div class="message-text">${text}</div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // 添加系统消息
+        function addSystemMessage(text) {
+            addMessage('system', text);
+        }
+        
+        // 发送用户消息
+        async function sendUserMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+            
+            if (text === 'help') {
+                addSystemMessage('可用命令: help, status, stop');
+                userInput.value = '';
+                return;
+            }
+            
+            if (text === 'status') {
+                const rate = chatState.messageCount > 0 ? 
+                    Math.round((chatState.meets100Count / chatState.messageCount) * 100) : 0;
+                addSystemMessage(`状态: ${chatState.isRunning ? '运行中' : '已停止'} | 消息: ${chatState.messageCount} | 字数: ${chatState.totalWords} | 达标率: ${rate}%`);
+                userInput.value = '';
+                return;
+            }
+            
+            if (text === 'stop') {
+                chatState.isRunning = false;
+                addSystemMessage('对话已停止');
+                userInput.value = '';
+                return;
+            }
+            
+            // 添加用户消息
+            addMessage('user', text);
+            chatState.conversationHistory.push({
+                speaker: '用户',
+                message: text,
+                wordCount: text.length
+            });
+            
+            userInput.value = '';
+            
+            // 如果对话正在进行，机器人会回应
+            if (chatState.isRunning && !chatState.isPaused) {
+                addSystemMessage('用户插入了消息，机器人会回应...');
+                
+                // 龙虾A回应
+                const result = await callChatAPI('A', text);
+                if (!chatState.isRunning || chatState.isPaused) return;
+                
+                addMessage('robot-a', result.message);
+                updateStatsAfterMessage(result, text.length);
+                
+                // 龙虾B回应（使用速度控制）
+                setTimeout(async () => {
+                    if (!chatState.isRunning || chatState.isPaused) return;
+                    
+                    const resultB = await callChatAPI('B');
+                    if (!chatState.isRunning || chatState.isPaused) return;
+                    
+                    addMessage('robot-b', resultB.message);
+                    updateStatsAfterMessage(resultB);
+                }, chatState.replySpeed * 1000);
+            }
+        }
+        
+        // 更新统计（消息后）
+        function updateStatsAfterMessage(result, userWordCount = 0) {
+            chatState.messageCount++;
+            chatState.totalWords += result.wordCount + userWordCount;
+            
+            // 新的达标标准：10-80字之间
+            if (result.wordCount >= 10 && result.wordCount <= 80) {
+                chatState.meets100Count++;
+            }
+            updateStats();
+        }
+        
+        // 暂停对话
+        function pauseConversation() {
+            if (!chatState.isRunning) {
+                alert('对话未开始');
+                return;
+            }
+            chatState.isPaused = true;
+            addSystemMessage('对话已暂停');
+            pauseBtn.disabled = true;
+            resumeBtn.disabled = false;
+        }
+        
+        // 继续对话
+        function resumeConversation() {
+            if (!chatState.isRunning) {
+                alert('对话未开始');
+                return;
+            }
+            chatState.isPaused = false;
+            addSystemMessage('对话已继续');
+            pauseBtn.disabled = false;
+            resumeBtn.disabled = true;
+            startNextRound();
+        }
+        
+        // 清空对话
+        function clearConversation() {
+            if (chatState.isRunning && !confirm('对话正在进行中，确定要清空吗？')) {
+                return;
+            }
+            
+            chatMessages.innerHTML = `
+                <div class="message robot-a">
+                    <div class="message-header">👩‍💼 龙虾姐姐</div>
+                    <div class="message-text">聊天记录已清空。请选择一个主题开始新的对话吧～</div>
+                </div>
+            `;
+            
+            chatState = {
+                isRunning: false,
+                isPaused: false,
+                currentTopic: '',
+                totalRounds: 0,
+                currentRound: 0,
+                messageCount: 1,
+                totalWords: 18,
+                meets100Count: 0,
+                conversationHistory: []
+            };
+            
+            currentTopic.textContent = '等待开始对话...';
+            currentRound.textContent = '0/0';
+            updateStats();
+            
+            addSystemMessage('聊天记录已清空，可以开始新的对话');
+        }
+        
+        // 结束对话
+        function endConversation() {
+            chatState.isRunning = false;
+            const rate = chatState.messageCount > 0 ? 
+                Math.round((chatState.meets100Count / chatState.messageCount) * 100) : 0;
+            addSystemMessage(`对话完成！共${chatState.totalRounds}轮，${chatState.messageCount}条消息，${chatState.totalWords}字，达标率${rate}%`);
+        }
+        
+        // 更新统计显示
+        function updateStats() {
+            messageCount.textContent = chatState.messageCount;
+            totalWords.textContent = chatState.totalWords;
+            const rate = chatState.messageCount > 0 ? 
+                Math.round((chatState.meets100Count / chatState.messageCount) * 100) : 0;
+            complianceRate.textContent = `${rate}%`;
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
