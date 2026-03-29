@@ -38,7 +38,7 @@
 export DEEPSEEK_API_KEY="sk-your-actual-key-here"
 
 # 2. 下载并运行
-git clone https://github.com/yourusername/lobster-chat-skill.git
+git clone https://github.com/chuangcui1/lobster-chat-skill.git
 cd lobster-chat-skill
 bash start_optimized_chat.sh
 ```
@@ -46,7 +46,7 @@ bash start_optimized_chat.sh
 ### 手动安装
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yourusername/lobster-chat-skill.git
+git clone https://github.com/chuangcui1/lobster-chat-skill.git
 cd lobster-chat-skill
 
 # 2. 安装依赖
@@ -201,8 +201,8 @@ echo $DEEPSEEK_API_KEY
 
 ## 📞 联系方式
 
-- **GitHub**: [@yourusername](https://github.com/yourusername)
-- **问题反馈**: [Issues](https://github.com/yourusername/lobster-chat-skill/issues)
+- **GitHub**: [@chuangcui1](https://github.com/chuangcui1)
+- **问题反馈**: [Issues](https://github.com/chuangcui1/lobster-chat-skill/issues)
 
 ## 🌟 致谢
 
