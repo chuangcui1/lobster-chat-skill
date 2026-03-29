@@ -199,6 +199,12 @@ echo $DEEPSEEK_API_KEY
 
 本项目采用MIT许可证 - 详见[LICENSE](LICENSE)文件。
 
+## 📚 相关文档
+
+- [小红书发布文章](docs/xiaohongshu_article.md) - 完整的小红书风格介绍文章
+- [技能包配置说明](docs/skill_config.json) - 详细的技能包配置信息
+- [完整经验总结](docs/full_experience.md) - 项目开发的完整历程和经验
+
 ## 📞 联系方式
 
 - **GitHub**: [@chuangcui1](https://github.com/chuangcui1)
